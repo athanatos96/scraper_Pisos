@@ -1,0 +1,47 @@
+{
+    "CAPTCHA_ID" : "captcha-container",
+
+    "REJECT_COOKIES_BUTTON_ID" : "didomi-notice-disagree-button",
+
+
+    "MUNICIPALITY_SEARCH_ID"      : "municipality-search",
+    "MUNICIPALITY_SEARCH_CLASS"   : "municipality-search",
+
+    "MUNICIPALITY_SECOND_MENU_CLASS_NAME" : "second-level-menu",
+
+    "MUNICIPALITY_SECOND_MENU_COMPRAR_TEXT"   : "Comprar",
+    "MUNICIPALITY_SECOND_MENU_ALQUILAR_TEXT"  : "Alquilar",
+    "MUNICIPALITY_SECOND_MENU_AGENCIAS_TEXT"  : "Agencias",
+
+    "MUNICIPALITY_THIRD_MENU_CLASS_NAME" : "third-level-menu",
+
+    "MUNICIPALITY_THIRD_MENU_OBRANUEVA_TEXT"          : " Obra nueva",
+    "MUNICIPALITY_THIRD_MENU_VIVIENDAS_TEXT"          : " Viviendas",
+    "MUNICIPALITY_THIRD_MENU_VACACIONAL_TEXT"         : " Vacacional",
+    "MUNICIPALITY_THIRD_MENU_HABITACION_TEXT"         : " Habitación",
+    "MUNICIPALITY_THIRD_MENU_GARAJES_TEXT"            : " Garajes",
+    "MUNICIPALITY_THIRD_MENU_TRASTEROS_TEXT"          : " Trasteros",
+    "MUNICIPALITY_THIRD_MENU_OFICINAS_TEXT"           : " Oficinas",
+    "MUNICIPALITY_THIRD_MENU_LOCALESONAVES_TEXT"      : " Locales o naves",
+    "MUNICIPALITY_THIRD_MENU_TERRENOS_TEXT"           : " Terrenos",
+    "MUNICIPALITY_THIRD_MENU_EDIFICIOS_TEXT"          : " Edificios",
+    "MUNICIPALITY_THIRD_MENU_COMPRAROVENDER_TEXT"     : " Para comprar o vender",
+    "MUNICIPALITY_THIRD_MENU_ALQUILAR_TEXT"           : " Para alquiler",
+    "MUNICIPALITY_THIRD_MENU_ALQUILAROFICINAS_TEXT"   : " Para Alquiler oficinas",
+    "MUNICIPALITY_THIRD_MENU_LUJO_TEXT"               : " De lujo",
+
+    "MUNICIPALITY_FOURTH_MENU_CLASS_NAME" : "third-level-menu",
+    "MUNICIPALITY_FOURTH_MENU_ID" : "filter-houses",
+
+    "MUNICIPALITY_FOURTH_MENU_CASASYCHALETS_TEXT" : "Casas y chalets",
+    "MUNICIPALITY_FOURTH_MENU_PISOS_TEXT" : "Pisos",
+    "MUNICIPALITY_FOURTH_MENU_PISOSATICOSYDUPLEX_TEXT": "Pisos, áticos y dúplex",
+    "MUNICIPALITY_FOURTH_MENU_CASASRUSTICAS_TEXT": "Casas rústicas",
+    "MUNICIPALITY_FOURTH_MENU_DUPLEX_TEXT": "Dúplex",
+    "MUNICIPALITY_FOURTH_MENU_ATICOS_TEXT": "Áticos",
+    "MUNICIPALITY_FOURTH_MENU_ESTUDIOS_TEXT": "Estudios",
+    "MUNICIPALITY_FOURTH_MENU_LOCALES_TEXT": "Locales",
+    "MUNICIPALITY_FOURTH_MENU_NAVES_TEXT": "Naves",
+
+    "MUNICIPALITY_LOCATIONS_LIST_MENU_CLASS_NAME": "locations-list"
+}
