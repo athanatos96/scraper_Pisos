@@ -8,6 +8,8 @@ from tqdm import tqdm
 from datetime import datetime
 import os
 import time
+import pandas as pd
+
 
 from utils.utils import print_section, random_sleep_with_progress, convert_from_f_string, explore_class
 from utils.captcha_handeler import wait_for_captcha
@@ -176,6 +178,72 @@ def get_buyrentagencias_apartments_by_municipality(sb):
     get_data_for_dict_queries(sb, search_params = search_params_agencias, out_path = out_path)
 
 
+def dict_to_dataframe(dictionary, parent_key='', sep='__'):
+    """
+    Recursively flattens a nested dictionary into a DataFrame.
+
+    Parameters:
+        dictionary (dict): The input dictionary to be flattened.
+        parent_key (str, optional): The parent key used for recursion. Defaults to ''.
+        sep (str, optional): The separator used to concatenate keys. Defaults to '__'.
+
+    Returns:
+        pandas.DataFrame: A DataFrame containing the flattened dictionary.
+    """
+    items = {}
+    for k, v in dictionary.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, dict):
+            items.update(dict_to_dataframe(v, new_key, sep=sep))
+        elif isinstance(v, list):
+            for i, elem in enumerate(v):
+                if isinstance(elem, dict):
+                    items.update(dict_to_dataframe(elem, f"{new_key}_elem{i+1}", sep=sep))
+                else:
+                    items[f"{new_key}_elem{i+1}"] = elem
+        else:
+            items[new_key] = v
+    return pd.DataFrame(items, index=[0])
+def merge_df_row(df, row_df):
+    if df is None:
+        df = pd.DataFrame(columns=row_df.columns)
+    
+    # Get list of columns from both dataframes
+    df_columns = set(df.columns)
+    row_columns = set(row_df.columns)
+    
+    # Find missing columns in each dataframe
+    missing_columns_df = row_columns - df_columns
+    missing_columns_row = df_columns - row_columns
+    
+    # Add missing columns to each dataframe
+    for col in missing_columns_df:
+        df[col] = None
+    for col in missing_columns_row:
+        row_df[col] = None
+    
+    # Reorder row_df columns to match df columns
+    row_df = row_df[df.columns]
+    
+    # Append row_df to df and reset index
+    #df = df.append(row_df, ignore_index=True)
+    df = pd.concat([df, row_df], ignore_index=True, sort=False)
+    df.reset_index(drop=True, inplace=True)
+    
+    return df
+
+def close_save_searcher(sb):
+    try:
+        css_selector = "div.searchsaver"
+        sb.find_element(css_selector, timeout=10)
+        not_found = True
+    except:
+        # Not found
+        not_found = False
+    if not_found:
+        css_selector = "a.icon-close.close-btn"
+        sb.driver.uc_click(css_selector)
+        random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on 'Close save results'")
 
 def search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of_location = "Provincia", order_by_price = True):
     ###################################################
@@ -194,6 +262,8 @@ def search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of
     if elem_class != "dropdown-wrapper active":
         # If button not active click it
         sb.driver.uc_click(css_selector)
+    # Wait for it
+    sb.find_element(css_house_type, timeout = 20)
     # Select Option
     sb.driver.uc_click(css_house_type)
     random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on {css_house_type}")
@@ -204,19 +274,22 @@ def search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of
     # type text
     css_selector = '.form-item-block input[type="text"]'
     sb.type(css_selector, location_name, by="css selector", timeout=None)
-    random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on {css_selector}")
+    random_sleep_with_progress(TIME_WAIT_SHORT, msg =f"After Clicked on {css_selector}")
+    time.sleep(1)
+    # Wait for it
+    sb.find_element('.form-item-block .container-result-list .result-list ul li .icon-location', timeout = 20)
     
     # Search all autofill options and click the correct one
     css_selector = '.form-item-block .container-result-list .result-list ul li'
     options = sb.find_elements(css_selector)
     for index, option in enumerate(options):
-        #print(f"Option text: {option.text}")
+        print(f"Option text: {option.text}")
         location_name_searched = option.get_attribute("data-location")
         print(f"Location text: {location_name_searched}")
         css_selector = '.icon-location'
         type_of_location_searched = option.find_element(By.CSS_SELECTOR, css_selector).text
         print(f"Type of Location text: {type_of_location}")
-        
+        random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on {css_selector}")
         if type_of_location_searched == type_of_location and location_name_searched == location_name:
             print("---- MATCH ----")
             css_selector = f'.form-item-block .container-result-list .result-list ul li:nth-child({index+1}) a'
@@ -229,8 +302,10 @@ def search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of
     ##########
     # When we selected the area it autmaticaly search
     # Now we want to show the results for the enire area that we are looking for
-    
     css_selector = '.show-all-link'
+    # Wait for it
+    sb.find_element(css_selector, timeout = 20)
+    # Click it
     sb.driver.uc_click(css_selector)
     random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on {css_selector}")
 
@@ -240,27 +315,147 @@ def search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of
     if order_by_price:
         css_selector = '#order-by ul li [data-value="precios-asc"]'
         #sb.highlight(css_selector, by="css selector", loops=6)
+        # Wait for it
+        sb.find_element(css_selector, timeout = 20)
+        # Click it
         sb.driver.uc_click(css_selector)
         random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on {css_selector}")
 
-def get_info_by_area(sb):
+def get_info_for_already_selected_location(sb, out_path, name_prefix, save_interval = 10):
+    # Open the fist one
+    css_selector = ".listing-items .items-container article.item"
+    # Wait for it
+    sb.find_element(css_selector, timeout = 20)
+    # Open the first one:
+    sb.driver.uc_click(css_selector)
+    random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on {css_selector}") 
     
-    # Compra
+    
+    out_path_file_utag = os.path.join(out_path, "Metadata", f"{name_prefix}__utag_data.csv")
+    out_path_file_config = os.path.join(out_path, "Metadata", f"{name_prefix}__config_data.csv")
+    
+    
+    df_utag_total = None
+    df_config_total = None
+    count = -1
+    while True:
+        count +=1
+        if count == 1:
+            break
+        
+        #############
+        # Read data #
+        #############
+        ######utag_data = sb.execute_script("return utag_data;")    
+        utag_data = sb.safe_execute_script("return utag_data;")  
+        #utag_data = {"test":1}
+        config_data = sb.safe_execute_script("return config;")    
+        #config_data = {"test":1}
+        
+        ################
+        # Process data #
+        ################
+        #df_utag = pd.DataFrame.from_dict(utag_data, orient='index').T
+        df_utag = dict_to_dataframe(utag_data)
+        df_utag_total = merge_df_row(df_utag_total, df_utag)
+        
+        #df_config = pd.DataFrame.from_dict(config_data, orient='index').T
+        df_config = dict_to_dataframe(config_data)
+        df_config_total = merge_df_row(df_config_total, df_config)
+        
+        #############
+        # Save data #
+        #############
+        
+        if count % save_interval == 0:
+            
+            df_utag_total.to_csv(out_path_file_utag, index=False)
+            
+            df_config_total.to_csv(out_path_file_config, index=False)
+
+        
+        #########################
+        # Iterate to next House #
+        #########################
+        css_selector = ".detail-pagination .content.detail-first-picture nav.detail-pagination--prev-next a.next" 
+        try:
+            # Wait for it
+            next_botton = sb.find_element(css_selector)
+            # Found the next botton
+            found_next_house = True
+            sb.driver.uc_click(css_selector)
+        except:
+            # Not found the next botton
+            found_next_house = False
+        if not found_next_house:
+            # End of the houses
+            break
+
+    # Go back to search
+    css_selector = ".detail-pagination .content.detail-first-picture nav.detail-pagination--back a" 
+    # Wait for it
+    next_botton = sb.find_element(css_selector)
+    # Click it
+    sb.driver.uc_click(css_selector)
+    random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on 'GO back To Province'") 
+    
+    # See if there is a searchsaver, if there is close it
+    close_save_searcher(sb)
+    
+    
+    
+    # Go back to main Menu
+    css_selector = ".listing-top .breadcrumb-navigation li.breadcrumb-navigation-element a"
+    # Wait for it
+    sb.find_element(css_selector, timeout = 20)
+    sb.slow_scroll_to(css_selector)
+    # Click it
+    sb.driver.uc_click(css_selector)
+    random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on 'GO back To Idealista'") 
+    
+    # See if there is a searchsaver, if there is close it
+    close_save_searcher(sb)
+    
+def get_info_by_area(sb):
+    out_path = f"./data/results/individual/{DATE}"
+    if not os.path.exists(out_path):
+        # Create the folder if it doesn't exist
+        os.makedirs(out_path)
+        
+    if not os.path.exists(f"{out_path}/Metadata"):
+        # Create the folder if it doesn't exist
+        os.makedirs(f"{out_path}/Metadata")
+        
+
     css_type_BuyRent = 'div.form-new-radio-button-wrapper fieldset.new-radio-button label[for="free-search-operation-sale"]'
     css_house_type = '.form-typology-wrapper ul.dropdown li[data-value="newdevelopment"]'
     location_name = 'Almería'
+    
+    # Search for the one
     search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of_location = "Provincia")
     
-    
-    # Open the first house
-    
-    # Iter untill end
-        # Read values
-        # Save Values
-        # Go to next
+    # Get all the info and save
+    name_prefix = f"{location_name}__Compra__Obra-Nueva"
+    get_info_for_already_selected_location(sb, out_path, name_prefix)
     
     
     
+    random_sleep_with_progress(TIME_WAIT_SHORT, msg ="After first Search")
+
+
+
+
+    css_type_BuyRent = 'div.form-new-radio-button-wrapper fieldset.new-radio-button label[for="free-search-operation-rent"]'
+    css_house_type = '.form-typology-wrapper ul.dropdown li[data-value="newdevelopment"]'
+    location_name = 'Almería'
+    
+    # Search for the one
+    search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of_location = "Provincia")
+    
+    # Get all the info and save
+    name_prefix = f"{location_name}__Alquilar__Obra-Nueva"
+    get_info_for_already_selected_location(sb, out_path, region_name = location_name)
+                  
 def main():
     with SB(uc=True, test=True) as sb:
         
@@ -294,8 +489,7 @@ def main():
         # ------------------------------------------------------------------------------------------------------------------
         # -------------------------------------------- Get Info by Municipality --------------------------------------------
         # ------------------------------------------------------------------------------------------------------------------
-        print_section(section_name = 'Get Info by Municipality')
-        
+        print_section(section_name = 'Get agregated Info by Municipality')
         
         #get_buyrentagencias_apartments_by_municipality(sb)
         
@@ -304,12 +498,11 @@ def main():
         # ------------------------------------------------------------------------------------------------------------------
         # ------------------------------------------------- Search By Area -------------------------------------------------
         # ------------------------------------------------------------------------------------------------------------------
-        
+        print_section(section_name = 'Get the appartmetns info by Area ')
         
         get_info_by_area(sb)
-        #get_buyrentagencias_apartments_by_municipality(sb)
-        
-        random_sleep_with_progress(TIME_WAIT_MEDIUM, msg ="After search for the different areas")
+       
+        #random_sleep_with_progress(TIME_WAIT_MEDIUM, msg ="After search for the different areas")
     
 if __name__ == "__main__":
     start = time.time()
