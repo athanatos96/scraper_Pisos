@@ -28,7 +28,25 @@ DATE = current_date.strftime('%Y%m%d')
 TIME_WAIT_LONG = 30
 TIME_WAIT_MEDIUM = 10
 TIME_WAIT_SHORT = 5
-TIME_WAIT_ULTRASHORT = 1
+TIME_WAIT_ULTRASHORT = 2
+
+COMUNIDADES_LIST = ["Andalucía",
+                        "Aragón",
+                        "Cantabria",
+                        "Castilla y León",
+                        "Castilla-La Mancha",
+                        "Cataluña",
+                        "Comunidad Foral de Navarra",
+                        "Comunidad Valenciana",
+                        "Comunidad de Madrid",
+                        "Extremadura",
+                        "Galicia",
+                        "Islas Baleares",
+                        "Islas Canarias",
+                        "La Rioja",
+                        "País Vasco",
+                        "Principado de Asturias",
+                        "Región de Murcia"]
 
 
 def click_botton_if_not_selected(sb, css_selector, text = ""):
@@ -161,8 +179,8 @@ def get_data_for_dict_queries(sb, search_params, out_path):
             #break
         #break
 
-def get_buyrentagencias_apartments_by_municipality(sb):
-    out_path = f"./data/results/agregated/{DATE}"
+def get_buyrentagencias_apartments_numbers_by_municipality(sb):
+    out_path = f"./data/results/{DATE}/agregated"
     if not os.path.exists(out_path):
         # Create the folder if it doesn't exist
         os.makedirs(out_path)
@@ -232,7 +250,7 @@ def merge_df_row(df, row_df):
     
     return df
 
-def close_save_searcher(sb):
+def _close_save_searcher(sb):
     try:
         css_selector = "div.searchsaver"
         sb.find_element(css_selector, timeout=10)
@@ -244,8 +262,7 @@ def close_save_searcher(sb):
         css_selector = "a.icon-close.close-btn"
         sb.driver.uc_click(css_selector)
         random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on 'Close save results'")
-
-def search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of_location = "Provincia", order_by_price = True):
+def _search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of_location = "Provincia", order_by_price = True):
     ###################################################
     # Select Mode: "Comprar", "Alquiler", "Compartir" #
     ###################################################
@@ -320,8 +337,7 @@ def search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of
         # Click it
         sb.driver.uc_click(css_selector)
         random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on {css_selector}")
-
-def get_info_for_already_selected_location(sb, out_path, name_prefix, save_interval = 10):
+def _get_info_for_already_selected_location(sb, out_path, name_prefix, save_interval = 10):
     # Open the fist one
     css_selector = ".listing-items .items-container article.item"
     # Wait for it
@@ -341,6 +357,7 @@ def get_info_for_already_selected_location(sb, out_path, name_prefix, save_inter
     while True:
         count +=1
         if count == 1:
+            pass
             break
         
         #############
@@ -398,24 +415,19 @@ def get_info_for_already_selected_location(sb, out_path, name_prefix, save_inter
     # Click it
     sb.driver.uc_click(css_selector)
     random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on 'GO back To Province'") 
-    
     # See if there is a searchsaver, if there is close it
-    close_save_searcher(sb)
-    
-    
+    _close_save_searcher(sb)
     
     # Go back to main Menu
-    css_selector = ".listing-top .breadcrumb-navigation li.breadcrumb-navigation-element a"
+    css_selector = 'figure.logo-container.starter a'
     # Wait for it
-    sb.find_element(css_selector, timeout = 20)
+    sb.find_element(css_selector, timeout = 10)
     sb.slow_scroll_to(css_selector)
     # Click it
     sb.driver.uc_click(css_selector)
     random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on 'GO back To Idealista'") 
-    
     # See if there is a searchsaver, if there is close it
-    close_save_searcher(sb)
-    
+    _close_save_searcher(sb)
 def get_info_by_area(sb):
     out_path = f"./data/results/individual/{DATE}"
     if not os.path.exists(out_path):
@@ -432,17 +444,13 @@ def get_info_by_area(sb):
     location_name = 'Almería'
     
     # Search for the one
-    search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of_location = "Provincia")
+    _search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of_location = "Provincia")
     
     # Get all the info and save
     name_prefix = f"{location_name}__Compra__Obra-Nueva"
-    get_info_for_already_selected_location(sb, out_path, name_prefix)
-    
-    
+    _get_info_for_already_selected_location(sb, out_path, name_prefix)
     
     random_sleep_with_progress(TIME_WAIT_SHORT, msg ="After first Search")
-
-
 
 
     css_type_BuyRent = 'div.form-new-radio-button-wrapper fieldset.new-radio-button label[for="free-search-operation-rent"]'
@@ -450,12 +458,220 @@ def get_info_by_area(sb):
     location_name = 'Almería'
     
     # Search for the one
-    search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of_location = "Provincia")
+    _search_bar_tool(sb, css_type_BuyRent, css_house_type, location_name, type_of_location = "Provincia")
     
     # Get all the info and save
     name_prefix = f"{location_name}__Alquilar__Obra-Nueva"
-    get_info_for_already_selected_location(sb, out_path, region_name = location_name)
-                  
+    _get_info_for_already_selected_location(sb, out_path, region_name = location_name)
+
+
+
+def _get_info_for_selected_comunity(sb, out_path, name_prefix, order_by_price = True, save_interval = 10):
+    ##################
+    # Order by Price #
+    ##################
+    if order_by_price:
+        try:
+            css_selector = '#order-by ul li [data-value="precios-asc"]'
+            # Wait for it
+            sb.find_element(css_selector, timeout = 10)
+            # Click it
+            sb.driver.uc_click(css_selector)
+            random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on {css_selector}")
+        except:
+            # There is no Order by price boton, continue to next
+            tqdm.write(f" - ERROR - No Order by Price Buton for {name_prefix}")
+            return
+    ###########################
+    # Open the First if exist #
+    ###########################
+    try:
+        css_selector = ".listing-items .items-container article.item"
+        # Wait for it
+        sb.find_element(css_selector, timeout = 20)
+        # Open the first one:
+        sb.driver.uc_click(css_selector)
+        random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on {css_selector}") 
+    except:
+        # There are no houses, continue to next
+        tqdm.write(f" - ERROR - No Order by Price Buton for {name_prefix}")
+        return
+    
+    out_path_file_utag = os.path.join(out_path, "Metadata", f"{name_prefix}__utag_data.csv")
+    out_path_file_config = os.path.join(out_path, "Metadata", f"{name_prefix}__config_data.csv")
+    
+    
+    df_utag_total = None
+    df_config_total = None
+    count = -1
+    break_loop = -10 # Set to negative to prevent early stop. Positvie Use for debugging
+    while True:
+        count +=1
+        if count == break_loop:
+            break
+        
+        #############
+        # Read data #
+        #############
+        ######utag_data = sb.execute_script("return utag_data;")    
+        utag_data = sb.safe_execute_script("return utag_data;")  
+        #utag_data = {"test":1}
+        config_data = sb.safe_execute_script("return config;")    
+        #config_data = {"test":1}
+        
+        ################
+        # Process data #
+        ################
+        #df_utag = pd.DataFrame.from_dict(utag_data, orient='index').T
+        df_utag = dict_to_dataframe(utag_data)
+        df_utag_total = merge_df_row(df_utag_total, df_utag)
+        
+        #df_config = pd.DataFrame.from_dict(config_data, orient='index').T
+        df_config = dict_to_dataframe(config_data)
+        df_config_total = merge_df_row(df_config_total, df_config)
+        
+        #############
+        # Save data #
+        #############
+        
+        if count % save_interval == 0:
+            
+            df_utag_total.to_csv(out_path_file_utag, index=False)
+            
+            df_config_total.to_csv(out_path_file_config, index=False)
+
+        
+        #########################
+        # Iterate to next House #
+        #########################
+        css_selector = ".detail-pagination .content.detail-first-picture nav.detail-pagination--prev-next a.next" 
+        try:
+            # Wait for it
+            next_botton = sb.find_element(css_selector)
+            # Found the next botton
+            found_next_house = True
+            sb.driver.uc_click(css_selector)
+        except:
+            # Not found the next botton
+            found_next_house = False
+        if not found_next_house:
+            # End of the houses
+            break
+    
+    #############
+    # Save data #
+    #############
+    if df_utag_total is not None:
+        df_utag_total.to_csv(out_path_file_utag, index=False)
+    if df_config_total is not None:     
+        df_config_total.to_csv(out_path_file_config, index=False)
+        
+    #####################
+    # Go back to search #
+    #####################
+    css_selector = ".detail-pagination .content.detail-first-picture nav.detail-pagination--back a" 
+    # Wait for it
+    next_botton = sb.find_element(css_selector)
+    # Click it
+    sb.driver.uc_click(css_selector)
+    random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on 'GO back To Province'") 
+    # See if there is a searchsaver, if there is close it
+    _close_save_searcher(sb)
+def _get_individual_info_by_Comunity_filtered(sb, search_params, out_path):
+    i = 0
+    for key, value in tqdm(search_params.items(), desc = "Extracting Individual Data for buy/rent appartments"):
+        tqdm.write(f" Getting data for {key}")
+        
+        for id, value in tqdm(value.items(), desc = f"Extracting Individual Data for buy/rent appartments for {key}"):
+            selection_name = value["selection_name"]
+            second_menu_text = value["second_menu_text"]
+            second_menu_selection = value["second_menu_selection"]
+            third_menu_text = value["third_menu_text"]
+            third_menu_selection = value["third_menu_selection"]
+            fourth_menu_text = value["fourth_menu_text"]
+            fourth_menu_selection = value["fourth_menu_selection"]
+            save = value["save"]
+            
+            #tqdm.write("\n")
+            #tqdm.write(f" Getting data for {selection_name}")
+            
+            if fourth_menu_text != "":
+                # We only want the general filtered tags, no the particular ones
+                continue
+            
+            
+            for comunidad in COMUNIDADES_LIST:
+                ##########
+                # Search #
+                ##########
+                tqdm.write("\n")
+                tqdm.write(f"Working with {selection_name} for {comunidad} Area")
+                tqdm.write("\n")
+                
+                # Select Second Menu
+                css_selector = convert_from_f_string(second_menu_selection, value_dict = VARIABLES_DICT)
+                click_botton_if_not_selected(sb, css_selector, text = second_menu_text)
+                
+                # Select Third Menu
+                css_selector = convert_from_f_string(third_menu_selection, value_dict = VARIABLES_DICT)
+                click_botton_if_not_selected(sb, css_selector, text = third_menu_text)
+            
+                # Select Comunidad
+                css_selector = f"#{VARIABLES_DICT['MUNICIPALITY_SEARCH_ID']} .{VARIABLES_DICT['MUNICIPALITY_LOCATIONS_LIST_MENU_CLASS_NAME']} ul li a:contains('{comunidad}')" # article ul
+                try:
+                    # wait for it
+                    elem = sb.find_element(css_selector)
+                    # Click on it
+                    sb.driver.uc_click(css_selector)
+                    random_sleep_with_progress(TIME_WAIT_ULTRASHORT, msg =f"After Clicked on {comunidad}")
+                except:
+                    # If there is no data, we cannot click it
+                    tqdm.write(f"\n\n\n - ERROR - Comunidad {comunidad} FAILED, cant select it \n\n\n")
+                    continue
+                
+                ################
+                # Get the Data #
+                ################
+                name_prefix = save.replace(".json",f"__{comunidad}")
+                _get_info_for_selected_comunity(sb, out_path, name_prefix, order_by_price = True, save_interval = 10)
+                
+                
+                ########################
+                # Go back to main Menu #
+                ########################
+                css_selector = 'figure.logo-container.starter a'
+                # Wait for it
+                sb.find_element(css_selector, timeout = 10)
+                sb.slow_scroll_to(css_selector)
+                # Click it
+                sb.driver.uc_click(css_selector)
+                random_sleep_with_progress(TIME_WAIT_SHORT, msg =f"After Clicked on 'GO back To Idealista'") 
+                # See if there is a searchsaver, if there is close it
+                _close_save_searcher(sb)
+                
+def get_individual_info_by_Comunity(sb):
+    ########################
+    # Create Output Folder #
+    ########################
+    out_path = f"./data/results/{DATE}/individual"
+    if not os.path.exists(out_path):
+        # Create the folder if it doesn't exist
+        os.makedirs(out_path)
+        
+    if not os.path.exists(f"{out_path}/Metadata"):
+        # Create the folder if it doesn't exist
+        os.makedirs(f"{out_path}/Metadata")
+        
+    search_params_comprar = SEARCH_PARAMS["Comprar"]
+    _get_individual_info_by_Comunity_filtered(sb, search_params = search_params_comprar, out_path = out_path)
+
+    search_params_alquilar = SEARCH_PARAMS["Alquilar"]
+    _get_individual_info_by_Comunity_filtered(sb, search_params = search_params_alquilar, out_path = out_path)
+    
+    search_params_agencias = SEARCH_PARAMS["Agencias"]
+    _get_individual_info_by_Comunity_filtered(sb, search_params = search_params_agencias, out_path = out_path)
+        
+
 def main():
     with SB(uc=True, test=True) as sb:
         
@@ -491,7 +707,7 @@ def main():
         # ------------------------------------------------------------------------------------------------------------------
         print_section(section_name = 'Get agregated Info by Municipality')
         
-        #get_buyrentagencias_apartments_by_municipality(sb)
+        #get_buyrentagencias_apartments_numbers_by_municipality(sb)
         
         #random_sleep_with_progress(TIME_WAIT_MEDIUM, msg ="After Get Info by Municipality")
         
@@ -500,8 +716,8 @@ def main():
         # ------------------------------------------------------------------------------------------------------------------
         print_section(section_name = 'Get the appartmetns info by Area ')
         
-        get_info_by_area(sb)
-       
+        #get_info_by_area(sb)
+        get_individual_info_by_Comunity(sb)
         #random_sleep_with_progress(TIME_WAIT_MEDIUM, msg ="After search for the different areas")
     
 if __name__ == "__main__":
